@@ -1,0 +1,697 @@
+openapi: 3.0.3
+info:
+  title: Rimcast
+  version: 0.1.0
+  description: Latency-aware edge inference placement for real-time IoT and physical-world AI.
+  x-product-slug: ai-decentralized-rimcast
+  x-source: ai-in-decentralized+ai/decentralizedai-iotconf-190117170353/
+servers:
+- url: https://api.example.com
+tags:
+- name: Models
+  description: Model versions and latency budgets
+- name: Capacity
+  description: Edge capacity registry
+- name: Placements
+  description: Placement decisions
+- name: Telemetry
+  description: SLA samples
+- name: Incidents
+  description: Incident evidence packs
+- name: Governance
+  description: Site freezes and safe mode
+paths:
+  /v1/models:
+    get:
+      operationId: listModelVersions
+      tags:
+      - Models
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEnvelopeModelVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+    post:
+      operationId: registerModelVersion
+      tags:
+      - Models
+      security:
+      - BearerAuth: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopeModelVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelVersionCreate'
+  /v1/models/{modelVersionId}/latency-budget:
+    put:
+      operationId: setLatencyBudget
+      tags:
+      - Models
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopeLatencyBudget'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      parameters:
+      - name: modelVersionId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LatencyBudget'
+  /v1/capacity/nodes:
+    get:
+      operationId: listEdgeNodes
+      tags:
+      - Capacity
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEnvelopeEdgeNode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+    post:
+      operationId: publishEdgeNode
+      tags:
+      - Capacity
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopeEdgeNode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EdgeNode'
+  /v1/placements:
+    get:
+      operationId: listPlacements
+      tags:
+      - Placements
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEnvelopePlacement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+    post:
+      operationId: requestPlacement
+      tags:
+      - Placements
+      security:
+      - BearerAuth: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopePlacement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlacementRequest'
+  /v1/telemetry/sla-samples:
+    post:
+      operationId: ingestSlaSample
+      tags:
+      - Telemetry
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopeSlaSample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlaSample'
+    get:
+      operationId: listSlaSamples
+      tags:
+      - Telemetry
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEnvelopeSlaSample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+      - name: siteId
+        in: query
+        schema:
+          type: string
+  /v1/incidents:
+    post:
+      operationId: createIncidentPack
+      tags:
+      - Incidents
+      security:
+      - BearerAuth: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopeIncidentPack'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentPackCreate'
+    get:
+      operationId: listIncidentPacks
+      tags:
+      - Incidents
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEnvelopeIncidentPack'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      parameters:
+      - $ref: '#/components/parameters/Cursor'
+  /v1/governance/site-freezes:
+    post:
+      operationId: freezeSitePlacements
+      tags:
+      - Governance
+      security:
+      - BearerAuth: []
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataEnvelopeSiteFreeze'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteFreeze'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnprocessableEntity:
+      description: Unprocessable entity
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    ResponseMeta:
+      type: object
+      required:
+      - requestId
+      - timestamp
+      properties:
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+    ModelVersion:
+      type: object
+      required:
+      - id
+      - name
+      - status
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - registered
+          - eligible
+          - blocked
+    ModelVersionCreate:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        artefactUri:
+          type: string
+    LatencyBudget:
+      type: object
+      required:
+      - modelVersionId
+      - maxLatencyMs
+      properties:
+        modelVersionId:
+          type: string
+        maxLatencyMs:
+          type: integer
+        allowCloudOverflow:
+          type: boolean
+    EdgeNode:
+      type: object
+      required:
+      - id
+      - siteId
+      properties:
+        id:
+          type: string
+        siteId:
+          type: string
+        deviceClass:
+          type: string
+        availableComputeUnits:
+          type: number
+        pricePerCompliantInference:
+          type: number
+    Placement:
+      type: object
+      required:
+      - id
+      - modelVersionId
+      - status
+      properties:
+        id:
+          type: string
+        modelVersionId:
+          type: string
+        edgeNodeId:
+          type: string
+        status:
+          type: string
+          enum:
+          - accepted
+          - refused
+          - rolled_back
+        refusalReason:
+          type: string
+    PlacementRequest:
+      type: object
+      required:
+      - modelVersionId
+      - siteId
+      properties:
+        modelVersionId:
+          type: string
+        siteId:
+          type: string
+    SlaSample:
+      type: object
+      required:
+      - id
+      - placementId
+      - latencyMs
+      properties:
+        id:
+          type: string
+        placementId:
+          type: string
+        latencyMs:
+          type: integer
+        withinBudget:
+          type: boolean
+    IncidentPack:
+      type: object
+      required:
+      - id
+      - siteId
+      properties:
+        id:
+          type: string
+        siteId:
+          type: string
+        modelVersionId:
+          type: string
+        edgeNodeId:
+          type: string
+        windowStart:
+          type: string
+          format: date-time
+        windowEnd:
+          type: string
+          format: date-time
+    IncidentPackCreate:
+      type: object
+      required:
+      - siteId
+      - windowStart
+      - windowEnd
+      properties:
+        siteId:
+          type: string
+        windowStart:
+          type: string
+          format: date-time
+        windowEnd:
+          type: string
+          format: date-time
+    SiteFreeze:
+      type: object
+      required:
+      - id
+      - siteId
+      - active
+      properties:
+        id:
+          type: string
+        siteId:
+          type: string
+        active:
+          type: boolean
+        reason:
+          type: string
+    DataEnvelopeModelVersion:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelVersion'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopeModelVersion:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModelVersion'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    DataEnvelopeLatencyBudget:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/LatencyBudget'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopeLatencyBudget:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/LatencyBudget'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    DataEnvelopeEdgeNode:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/EdgeNode'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopeEdgeNode:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/EdgeNode'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    DataEnvelopePlacement:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/Placement'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopePlacement:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Placement'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    DataEnvelopeSlaSample:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/SlaSample'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopeSlaSample:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/SlaSample'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    DataEnvelopeIncidentPack:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/IncidentPack'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopeIncidentPack:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/IncidentPack'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    DataEnvelopeSiteFreeze:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/SiteFreeze'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ListEnvelopeSiteFreeze:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          required:
+          - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/SiteFreeze'
+            nextCursor:
+              type: string
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
