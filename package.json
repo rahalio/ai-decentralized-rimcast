@@ -1,0 +1,36 @@
+{
+  "name": "rimcast",
+  "version": "0.1.0",
+  "description": "Rimcast latency-aware edge inference placement (OpenAPI-first DDD monorepo)",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:openapi": "pnpm --filter @rimcast/openapi-core lint:domains",
+    "bundle:openapi": "pnpm --filter @rimcast/openapi-core bundle:domains",
+    "build": "pnpm --filter @rimcast/core build && pnpm --filter @rimcast/services build && pnpm --filter @rimcast/adapters build && pnpm --filter @rimcast/api-server build",
+    "dev:api": "pnpm --filter @rimcast/api-server dev",
+    "codegen:core": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --all --layers core --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:identity": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain identity --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:paths": "node scripts/sync-codegen-paths.mjs",
+    "dev:web": "pnpm --filter @rimcast/webapp dev",
+    "build:web": "pnpm --filter @rimcast/webapp build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+openapi: 3.1.0
+info:
+  title: Telemetry schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    SlaSampleId:
+      type: string
+      pattern: '^sla_[0-9a-z]{26}$'
+    SlaSample:
+      type: object
+      required: [id, placementId, siteId, modelVersionId, latencyMs, withinBudget, sampledAt]
+      properties:
+        id: { $ref: '#/components/schemas/SlaSampleId' }
+        placementId: { type: string }
+        siteId: { type: string }
+        modelVersionId: { type: string }
+        deviceClass: { type: string }
+        latencyMs: { type: integer, minimum: 0 }
+        withinBudget: { type: boolean }
+        sampledAt: { type: string, format: date-time }
+    SlaSampleIngest:
+      type: object
+      required: [placementId, siteId, modelVersionId, latencyMs]
+      properties:
+        placementId: { type: string }
+        siteId: { type: string }
+        modelVersionId: { type: string }
+        deviceClass: { type: string }
+        latencyMs: { type: integer, minimum: 0 }
+        sampledAt: { type: string, format: date-time }
+    SlaSampleListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SlaSample' }
+        nextCursor: { type: string }
+    SlaSampleResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/SlaSample' }
+    SlaSampleListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/SlaSampleListData' }

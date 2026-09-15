@@ -1,0 +1,172 @@
+openapi: 3.1.0
+info:
+  title: Capacity API
+  version: 0.1.0
+  description: |
+    Edge capacity registry and commercial offers (BR-8, BR-12).
+  x-domain: cap
+  license:
+    name: Proprietary
+    url: https://rimcast.local/license
+servers:
+  - url: https://api.rimcast.local
+security:
+  - apiKey: []
+tags:
+  - name: Capacity
+    description: Edge nodes and capacity offers
+paths:
+  /v1/capacity/nodes:
+    get:
+      operationId: listEdgeNodes
+      tags: [Capacity]
+      summary: List edge nodes
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: siteId
+          in: query
+          schema: { type: string }
+      x-repository: EdgeNode
+      x-dynamodb:
+        entityType: "EDGENODE"
+        pkPatternTemplate: "EDGENODE#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+        filterFields: ["siteId"]
+      responses:
+        '200':
+          description: Nodes page
+          content:
+            application/json:
+              schema:
+                $ref: ./capacity.schemas.yaml#/components/schemas/EdgeNodeListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: publishEdgeNode
+      tags: [Capacity]
+      summary: Publish edge node capacity
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./capacity.schemas.yaml#/components/schemas/EdgeNodePublish
+      x-repository: EdgeNode
+      x-dynamodb:
+        entityType: "EDGENODE"
+        pkPatternTemplate: "EDGENODE#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+      responses:
+        '201':
+          description: Node published
+          content:
+            application/json:
+              schema:
+                $ref: ./capacity.schemas.yaml#/components/schemas/EdgeNodeResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/capacity/offers:
+    get:
+      operationId: listCapacityOffers
+      tags: [Capacity]
+      summary: List capacity offers
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: siteId
+          in: query
+          schema: { type: string }
+      x-repository: CapacityOffer
+      x-dynamodb:
+        entityType: "CAPACITYOFFER"
+        pkPatternTemplate: "CAPACITYOFFER#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+        filterFields: ["siteId"]
+      responses:
+        '200':
+          description: Offers page
+          content:
+            application/json:
+              schema:
+                $ref: ./capacity.schemas.yaml#/components/schemas/CapacityOfferListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: publishCapacityOffer
+      tags: [Capacity]
+      summary: Publish priced capacity offer
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./capacity.schemas.yaml#/components/schemas/CapacityOfferCreate
+      x-repository: CapacityOffer
+      x-dynamodb:
+        entityType: "CAPACITYOFFER"
+        pkPatternTemplate: "CAPACITYOFFER#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+      responses:
+        '201':
+          description: Offer published
+          content:
+            application/json:
+              schema:
+                $ref: ./capacity.schemas.yaml#/components/schemas/CapacityOfferResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/capacity/offers/{offerId}/withdraw:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          $ref: ./capacity.schemas.yaml#/components/schemas/CapacityOfferId
+    post:
+      operationId: withdrawCapacityOffer
+      tags: [Capacity]
+      summary: Withdraw capacity from placement pool
+      x-repository: CapacityOffer
+      responses:
+        '200':
+          description: Offer withdrawn
+          content:
+            application/json:
+              schema:
+                $ref: ./capacity.schemas.yaml#/components/schemas/CapacityOfferResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

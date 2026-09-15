@@ -1,0 +1,72 @@
+openapi: 3.1.0
+info:
+  title: Models schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    ModelVersionId:
+      type: string
+      pattern: '^mdl_[0-9a-z]{26}$'
+    ModelStatus:
+      type: string
+      enum: [registered, eligible, blocked]
+    LatencyBudget:
+      type: object
+      required: [modelVersionId, maxLatencyMs, allowCloudOverflow, updatedAt]
+      properties:
+        modelVersionId: { $ref: '#/components/schemas/ModelVersionId' }
+        maxLatencyMs: { type: integer, minimum: 1 }
+        allowCloudOverflow: { type: boolean, default: false }
+        measurementDefinition: { type: string, description: 'Client-to-result measurement definition' }
+        updatedAt: { type: string, format: date-time }
+    LatencyBudgetUpsert:
+      type: object
+      required: [maxLatencyMs]
+      properties:
+        maxLatencyMs: { type: integer, minimum: 1 }
+        allowCloudOverflow: { type: boolean, default: false }
+        measurementDefinition: { type: string }
+    ModelVersion:
+      type: object
+      required: [id, name, status, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/ModelVersionId' }
+        name: { type: string, minLength: 1 }
+        artefactUri: { type: string }
+        status: { $ref: '#/components/schemas/ModelStatus' }
+        latencyBudget: { $ref: '#/components/schemas/LatencyBudget' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ModelVersionCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        artefactUri: { type: string }
+    ModelVersionListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ModelVersion' }
+        nextCursor: { type: string }
+    ModelVersionResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/ModelVersion' }
+    ModelVersionListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/ModelVersionListData' }
+    LatencyBudgetResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/LatencyBudget' }

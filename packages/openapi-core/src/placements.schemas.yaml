@@ -1,0 +1,83 @@
+openapi: 3.1.0
+info:
+  title: Placements schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    PlacementId:
+      type: string
+      pattern: '^plc_[0-9a-z]{26}$'
+    PlacementStatus:
+      type: string
+      enum: [accepted, refused, rolled_back, safe_mode]
+    Placement:
+      type: object
+      required: [id, modelVersionId, siteId, status, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/PlacementId' }
+        modelVersionId: { type: string }
+        siteId: { type: string }
+        edgeNodeId: { type: string }
+        deviceClass: { type: string }
+        status: { $ref: '#/components/schemas/PlacementStatus' }
+        measuredRttMs: { type: integer }
+        refusalReason: { type: string }
+        cloudOverflow: { type: boolean, default: false }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    PlacementRequest:
+      type: object
+      required: [modelVersionId, siteId]
+      properties:
+        modelVersionId: { type: string }
+        siteId: { type: string }
+        preferredDeviceClass: { type: string }
+        allowCloudOverflow: { type: boolean, default: false }
+    PlacementSimulateRequest:
+      type: object
+      required: [modelVersionId, siteId]
+      properties:
+        modelVersionId: { type: string }
+        siteId: { type: string }
+        preferredDeviceClass: { type: string }
+    FeasibilityResult:
+      type: object
+      required: [feasible, candidateNodeIds]
+      properties:
+        feasible: { type: boolean }
+        candidateNodeIds:
+          type: array
+          items: { type: string }
+        reason: { type: string }
+        estimatedRttMs: { type: integer }
+    PlacementRollbackRequest:
+      type: object
+      properties:
+        reason: { type: string }
+    PlacementListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Placement' }
+        nextCursor: { type: string }
+    PlacementResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Placement' }
+    PlacementListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/PlacementListData' }
+    FeasibilityResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/FeasibilityResult' }

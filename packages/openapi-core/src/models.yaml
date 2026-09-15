@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: Models API
+  version: 0.1.0
+  description: |
+    Model versions and end-to-end inference latency budgets (BR-1).
+  x-domain: mdl
+  license:
+    name: Proprietary
+    url: https://rimcast.local/license
+servers:
+  - url: https://api.rimcast.local
+security:
+  - apiKey: []
+tags:
+  - name: Models
+    description: Model versions and latency budgets
+paths:
+  /v1/models:
+    get:
+      operationId: listModelVersions
+      tags: [Models]
+      summary: List model versions
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            $ref: ./models.schemas.yaml#/components/schemas/ModelStatus
+      x-repository: ModelVersion
+      x-dynamodb:
+        entityType: "MODELVERSION"
+        pkPatternTemplate: "MODELVERSION#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+        filterFields: ["status"]
+      responses:
+        '200':
+          description: Model versions page
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/ModelVersionListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: registerModelVersion
+      tags: [Models]
+      summary: Register a model version
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./models.schemas.yaml#/components/schemas/ModelVersionCreate
+      x-repository: ModelVersion
+      x-dynamodb:
+        entityType: "MODELVERSION"
+        pkPatternTemplate: "MODELVERSION#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+      responses:
+        '201':
+          description: Model registered
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/ModelVersionResponse
+        '422':
+          $ref: ./common/responses.yaml#/components/responses/UnprocessableEntity
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/models/{modelVersionId}:
+    parameters:
+      - name: modelVersionId
+        in: path
+        required: true
+        schema:
+          $ref: ./models.schemas.yaml#/components/schemas/ModelVersionId
+    get:
+      operationId: getModelVersion
+      tags: [Models]
+      summary: Get model version
+      x-repository: ModelVersion
+      x-dynamodb:
+        entityType: "MODELVERSION"
+        pkPatternTemplate: "MODELVERSION#${modelVersionId}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Model version
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/ModelVersionResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/models/{modelVersionId}/latency-budget:
+    parameters:
+      - name: modelVersionId
+        in: path
+        required: true
+        schema:
+          $ref: ./models.schemas.yaml#/components/schemas/ModelVersionId
+    put:
+      operationId: setLatencyBudget
+      tags: [Models]
+      summary: Set max E2E latency budget before placement
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./models.schemas.yaml#/components/schemas/LatencyBudgetUpsert
+      x-repository: ModelVersion
+      responses:
+        '200':
+          description: Budget saved
+          content:
+            application/json:
+              schema:
+                $ref: ./models.schemas.yaml#/components/schemas/LatencyBudgetResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

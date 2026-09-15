@@ -1,0 +1,163 @@
+openapi: 3.1.0
+info:
+  title: Governance schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    SiteFreezeId:
+      type: string
+      pattern: '^frz_[0-9a-z]{26}$'
+    SafeModeEventId:
+      type: string
+      pattern: '^sfe_[0-9a-z]{26}$'
+    EgressPolicyId:
+      type: string
+      pattern: '^egr_[0-9a-z]{26}$'
+    OverflowExceptionId:
+      type: string
+      pattern: '^ovx_[0-9a-z]{26}$'
+    SiteFreeze:
+      type: object
+      required: [id, siteId, active, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/SiteFreezeId' }
+        siteId: { type: string }
+        active: { type: boolean }
+        reason: { type: string }
+        frozenByUserId: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    SiteFreezeCreate:
+      type: object
+      required: [siteId]
+      properties:
+        siteId: { type: string }
+        reason: { type: string }
+    SafeModeEvent:
+      type: object
+      required: [id, siteId, status, playbook, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/SafeModeEventId' }
+        siteId: { type: string }
+        placementId: { type: string }
+        status: { type: string, enum: [active, cleared] }
+        playbook: { type: string }
+        acknowledgment: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    SafeModeEnter:
+      type: object
+      required: [siteId, playbook]
+      properties:
+        siteId: { type: string }
+        placementId: { type: string }
+        playbook: { type: string }
+    SafeModeClear:
+      type: object
+      properties:
+        acknowledgment: { type: string }
+    EgressPolicy:
+      type: object
+      required: [id, siteId, allowOverflow, purposeTags, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/EgressPolicyId' }
+        siteId: { type: string }
+        allowOverflow: { type: boolean }
+        purposeTags:
+          type: array
+          items: { type: string }
+        updatedAt: { type: string, format: date-time }
+    EgressPolicyUpsert:
+      type: object
+      required: [siteId, allowOverflow]
+      properties:
+        siteId: { type: string }
+        allowOverflow: { type: boolean }
+        purposeTags:
+          type: array
+          items: { type: string }
+    OverflowException:
+      type: object
+      required: [id, siteId, purposeTag, status, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/OverflowExceptionId' }
+        siteId: { type: string }
+        purposeTag: { type: string }
+        rationale: { type: string }
+        status: { type: string, enum: [pending, approved, revoked] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    OverflowExceptionCreate:
+      type: object
+      required: [siteId, purposeTag, rationale]
+      properties:
+        siteId: { type: string }
+        purposeTag: { type: string }
+        rationale: { type: string, minLength: 1 }
+    SiteFreezeListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SiteFreeze' }
+        nextCursor: { type: string }
+    SafeModeEventListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SafeModeEvent' }
+        nextCursor: { type: string }
+    OverflowExceptionListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OverflowException' }
+        nextCursor: { type: string }
+    SiteFreezeResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/SiteFreeze' }
+    SiteFreezeListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/SiteFreezeListData' }
+    SafeModeEventResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/SafeModeEvent' }
+    SafeModeEventListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/SafeModeEventListData' }
+    EgressPolicyResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/EgressPolicy' }
+    OverflowExceptionResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/OverflowException' }
+    OverflowExceptionListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/OverflowExceptionListData' }

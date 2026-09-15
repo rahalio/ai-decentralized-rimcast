@@ -1,0 +1,174 @@
+openapi: 3.1.0
+info:
+  title: Placements API
+  version: 0.1.0
+  description: |
+    Placement engine — accept/refuse based on measured capacity and RTT; rollback (BR-2–4, BR-7).
+  x-domain: plc
+  license:
+    name: Proprietary
+    url: https://rimcast.local/license
+servers:
+  - url: https://api.rimcast.local
+security:
+  - apiKey: []
+tags:
+  - name: Placements
+    description: Place, refuse, simulate, rollback
+paths:
+  /v1/placements:
+    get:
+      operationId: listPlacements
+      tags: [Placements]
+      summary: List placements
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: siteId
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema:
+            $ref: ./placements.schemas.yaml#/components/schemas/PlacementStatus
+      x-repository: Placement
+      x-dynamodb:
+        entityType: "PLACEMENT"
+        pkPatternTemplate: "PLACEMENT#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+        filterFields: ["siteId", "status"]
+      responses:
+        '200':
+          description: Placements page
+          content:
+            application/json:
+              schema:
+                $ref: ./placements.schemas.yaml#/components/schemas/PlacementListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: requestPlacement
+      tags: [Placements]
+      summary: Request placement (accept or refuse)
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./placements.schemas.yaml#/components/schemas/PlacementRequest
+      x-repository: Placement
+      x-dynamodb:
+        entityType: "PLACEMENT"
+        pkPatternTemplate: "PLACEMENT#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+      responses:
+        '201':
+          description: Placement decision
+          content:
+            application/json:
+              schema:
+                $ref: ./placements.schemas.yaml#/components/schemas/PlacementResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/placements/simulate:
+    post:
+      operationId: simulatePlacementFeasibility
+      tags: [Placements]
+      summary: Simulate placement feasibility without committing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./placements.schemas.yaml#/components/schemas/PlacementSimulateRequest
+      x-repository: Placement
+      responses:
+        '200':
+          description: Feasibility result
+          content:
+            application/json:
+              schema:
+                $ref: ./placements.schemas.yaml#/components/schemas/FeasibilityResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/placements/{placementId}:
+    parameters:
+      - name: placementId
+        in: path
+        required: true
+        schema:
+          $ref: ./placements.schemas.yaml#/components/schemas/PlacementId
+    get:
+      operationId: getPlacement
+      tags: [Placements]
+      summary: Get placement
+      x-repository: Placement
+      x-dynamodb:
+        entityType: "PLACEMENT"
+        pkPatternTemplate: "PLACEMENT#${placementId}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "createdAt"
+        updatedAtField: "updatedAt"
+        softDeleteEnabled: false
+      responses:
+        '200':
+          description: Placement
+          content:
+            application/json:
+              schema:
+                $ref: ./placements.schemas.yaml#/components/schemas/PlacementResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/placements/{placementId}/rollback:
+    parameters:
+      - name: placementId
+        in: path
+        required: true
+        schema:
+          $ref: ./placements.schemas.yaml#/components/schemas/PlacementId
+    post:
+      operationId: rollbackPlacement
+      tags: [Placements]
+      summary: Instant rollback on latency/error breach
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: ./placements.schemas.yaml#/components/schemas/PlacementRollbackRequest
+      x-repository: Placement
+      responses:
+        '200':
+          description: Placement rolled back
+          content:
+            application/json:
+              schema:
+                $ref: ./placements.schemas.yaml#/components/schemas/PlacementResponse
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

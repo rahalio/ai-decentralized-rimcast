@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: Telemetry API
+  version: 0.1.0
+  description: |
+    Live SLA samples by site, model, and device class (BR-6).
+  x-domain: tla
+  license:
+    name: Proprietary
+    url: https://rimcast.local/license
+servers:
+  - url: https://api.rimcast.local
+security:
+  - apiKey: []
+tags:
+  - name: Telemetry
+    description: SLA samples
+paths:
+  /v1/telemetry/sla-samples:
+    get:
+      operationId: listSlaSamples
+      tags: [Telemetry]
+      summary: List SLA samples
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: siteId
+          in: query
+          schema: { type: string }
+        - name: modelVersionId
+          in: query
+          schema: { type: string }
+        - name: deviceClass
+          in: query
+          schema: { type: string }
+      x-repository: SlaSample
+      x-dynamodb:
+        entityType: "SLASAMPLE"
+        pkPatternTemplate: "SLASAMPLE#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "sampledAt"
+        updatedAtField: "sampledAt"
+        softDeleteEnabled: false
+        filterFields: ["siteId", "modelVersionId", "deviceClass"]
+      responses:
+        '200':
+          description: Samples page
+          content:
+            application/json:
+              schema:
+                $ref: ./telemetry.schemas.yaml#/components/schemas/SlaSampleListResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: ingestSlaSample
+      tags: [Telemetry]
+      summary: Ingest an SLA sample from an edge agent
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./telemetry.schemas.yaml#/components/schemas/SlaSampleIngest
+      x-repository: SlaSample
+      x-dynamodb:
+        entityType: "SLASAMPLE"
+        pkPatternTemplate: "SLASAMPLE#${id}"
+        skPatternTemplate: "METADATA"
+        pkPattern: "entity"
+        usePkQuery: false
+        createdAtField: "sampledAt"
+        updatedAtField: "sampledAt"
+        softDeleteEnabled: false
+      responses:
+        '201':
+          description: Sample ingested
+          content:
+            application/json:
+              schema:
+                $ref: ./telemetry.schemas.yaml#/components/schemas/SlaSampleResponse
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

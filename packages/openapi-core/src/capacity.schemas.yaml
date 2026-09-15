@@ -1,0 +1,102 @@
+openapi: 3.1.0
+info:
+  title: Capacity schemas
+  version: 0.1.0
+paths: {}
+components:
+  schemas:
+    EdgeNodeId:
+      type: string
+      pattern: '^nde_[0-9a-z]{26}$'
+    CapacityOfferId:
+      type: string
+      pattern: '^cof_[0-9a-z]{26}$'
+    NodeHealth:
+      type: string
+      enum: [healthy, degraded, unhealthy]
+    PricingModel:
+      type: string
+      enum: [per_compliant_inference, reserved_slot]
+    EdgeNode:
+      type: object
+      required: [id, siteId, deviceClass, availableComputeUnits, health, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/EdgeNodeId' }
+        siteId: { type: string, minLength: 1 }
+        deviceClass: { type: string }
+        availableComputeUnits: { type: number }
+        measuredRttMs: { type: integer, minimum: 0 }
+        health: { $ref: '#/components/schemas/NodeHealth' }
+        pricePerCompliantInference: { type: number, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    EdgeNodePublish:
+      type: object
+      required: [siteId, deviceClass, availableComputeUnits]
+      properties:
+        siteId: { type: string, minLength: 1 }
+        deviceClass: { type: string }
+        availableComputeUnits: { type: number }
+        measuredRttMs: { type: integer, minimum: 0 }
+        pricePerCompliantInference: { type: number, minimum: 0 }
+    CapacityOffer:
+      type: object
+      required: [id, edgeNodeId, siteId, slotsAvailable, pricingModel, unitPrice, status, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/CapacityOfferId' }
+        edgeNodeId: { $ref: '#/components/schemas/EdgeNodeId' }
+        siteId: { type: string }
+        slotsAvailable: { type: integer, minimum: 0 }
+        pricingModel: { $ref: '#/components/schemas/PricingModel' }
+        unitPrice: { type: number, minimum: 0 }
+        status: { type: string, enum: [published, withdrawn] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CapacityOfferCreate:
+      type: object
+      required: [edgeNodeId, slotsAvailable, pricingModel, unitPrice]
+      properties:
+        edgeNodeId: { $ref: '#/components/schemas/EdgeNodeId' }
+        slotsAvailable: { type: integer, minimum: 0 }
+        pricingModel: { $ref: '#/components/schemas/PricingModel' }
+        unitPrice: { type: number, minimum: 0 }
+    EdgeNodeListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EdgeNode' }
+        nextCursor: { type: string }
+    CapacityOfferListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CapacityOffer' }
+        nextCursor: { type: string }
+    EdgeNodeResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/EdgeNode' }
+    EdgeNodeListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/EdgeNodeListData' }
+    CapacityOfferResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/DataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/CapacityOffer' }
+    CapacityOfferListResponse:
+      allOf:
+        - $ref: ./common/envelopes.yaml#/components/schemas/PagedDataEnvelope
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/CapacityOfferListData' }
